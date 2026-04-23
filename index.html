@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analisi Portafoglio — DAN HAIM S.R.L.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0C0C0A;
+    --surface: #131310;
+    --card: #1A1A16;
+    --card-hover: #1F1F1A;
+    --border: rgba(201,168,76,0.15);
+    --border-subtle: rgba(255,255,255,0.06);
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --gold-dim: rgba(201,168,76,0.2);
+    --text: #F0EBE0;
+    --text-sec: #8A8478;
+    --text-dim: #4A4840;
+    --green: #4CAF7D;
+    --green-dim: rgba(76,175,125,0.15);
+    --red: #E24B4A;
+    --red-dim: rgba(226,75,74,0.12);
+    --amber: #D4A017;
+    --amber-dim: rgba(212,160,23,0.15);
+    --blue: #5B9BD5;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* DECORATIVE BG */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 32px 0 28px;
+    margin-bottom: 56px;
+  }
+
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .header-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .header-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-sec);
+    line-height: 1.8;
+  }
+
+  /* SECTION TITLES */
+  .section {
+    margin-bottom: 64px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 0.5px solid var(--border-subtle);
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-sec);
+    margin-bottom: 16px;
+  }
+
+  /* METRIC CARDS */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .metric-card {
+    background: var(--card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .metric-card:hover { border-color: var(--border); }
+
+  .metric-card.accent { border-color: var(--border); }
+
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .metric-value.gold { color: var(--gold); }
+  .metric-value.red { color: var(--red); }
+  .metric-value.green { color: var(--green); }
+
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* PORTFOLIO CHART SECTION */
+  .chart-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .chart-wrap {
+    position: relative;
+  }
+
+  .chart-center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .chart-center-label .big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+  }
+
+  .chart-center-label .small {
+    font-size: 11px;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* INVENTORY TABLE */
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .inv-table thead th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 0 12px 10px;
+    text-align: left;
+    border-bottom: 0.5px solid var(--border-subtle);
+  }
+
+  .inv-table thead th:last-child,
+  .inv-table thead th:nth-child(4),
+  .inv-table thead th:nth-child(3) { text-align: right; }
+
+  .inv-table tbody tr {
+    border-bottom: 0.5px solid var(--border-subtle);
+    transition: background 0.15s;
+  }
+
+  .inv-table tbody tr:hover { background: var(--card-hover); }
+  .inv-table tbody tr:last-child { border-bottom: none; }
+
+  .inv-table td {
+    padding: 11px 12px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .inv-table td:nth-child(3),
+  .inv-table td:nth-child(4),
+  .inv-table td:last-child { text-align: right; }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-gold { background: var(--gold-dim); color: var(--gold-light); }
+  .badge-neutral { background: rgba(255,255,255,0.06); color: var(--text-sec); }
+
+  .name-cell { color: var(--text); font-weight: 400; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ETF REPLACEMENT */
+  .etf-card {
+    background: var(--card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 36px 1fr 100px;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .etf-card:hover { border-color: var(--border); }
+
+  .etf-card.keep {
+    border-color: rgba(76,175,125,0.2);
+    background: rgba(76,175,125,0.04);
+  }
+
+  .etf-from-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .etf-from-detail {
+    font-size: 11px;
+    color: var(--text-sec);
+    line-height: 1.5;
+  }
+
+  .etf-arrow {
+    font-size: 18px;
+    color: var(--gold);
+    text-align: center;
+  }
+
+  .etf-to-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .etf-to-detail {
+    font-size: 11px;
+    color: var(--text-sec);
+    line-height: 1.5;
+  }
+
+  .etf-saving {
+    text-align: right;
+  }
+
+  .etf-saving .saving-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--green);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .etf-saving .saving-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* COST COMPARISON */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .cost-block {
+    background: var(--card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .cost-block.etf-block { border-color: rgba(76,175,125,0.25); }
+
+  .cost-block-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-sec);
+    margin-bottom: 16px;
+  }
+
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+    font-size: 12px;
+  }
+
+  .cost-row:last-child { border-bottom: none; }
+  .cost-row .cost-name { color: var(--text-sec); }
+  .cost-row .cost-val { font-family: 'JetBrains Mono', monospace; color: var(--text); }
+
+  .cost-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 0;
+    margin-top: 10px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .cost-total-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .cost-total-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; }
+
+  .saving-banner {
+    background: var(--green-dim);
+    border: 0.5px solid rgba(76,175,125,0.3);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .saving-banner-text { font-size: 13px; color: var(--text-sec); }
+  .saving-banner-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500; color: var(--green); }
+
+  /* SIMULATOR */
+  .sim-controls {
+    background: var(--card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .slider-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .slider-item label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-sec);
+    margin-bottom: 8px;
+  }
+
+  .slider-item .slider-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    background: rgba(201,168,76,0.2);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  .sim-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .diff-callout {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+
+  .diff-callout strong { color: var(--green); }
+
+  /* LEGEND */
+  .chart-legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-sec);
+  }
+
+  .legend-line {
+    width: 20px;
+    height: 2px;
+    border-radius: 1px;
+  }
+
+  .legend-dashed {
+    width: 20px;
+    height: 0;
+    border-top: 2px dashed;
+  }
+
+  /* TABS */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: var(--card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 4px;
+    width: fit-content;
+  }
+
+  .tab-btn {
+    padding: 7px 18px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    background: transparent;
+    color: var(--text-sec);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .tab-btn.active {
+    background: rgba(201,168,76,0.15);
+    color: var(--gold-light);
+    font-weight: 500;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ADVISORY NOTE */
+  .advisory {
+    background: rgba(90,90,80,0.15);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-top: 20px;
+  }
+
+  /* TYPE LABEL */
+  .type-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 0.5px solid currentColor;
+    opacity: 0.7;
+  }
+
+  /* SECTION DIVIDERS */
+  .section-group-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    margin-bottom: 2px;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 0.5px solid var(--border-subtle);
+    padding: 28px 0 40px;
+    margin-top: 64px;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-layout { grid-template-columns: 1fr; }
+    .sim-metrics { grid-template-columns: repeat(2, 1fr); }
+    .slider-group { grid-template-columns: 1fr; }
+    .cost-grid { grid-template-columns: 1fr; }
+    .etf-card { grid-template-columns: 1fr; }
+    .header-inner { flex-direction: column; gap: 16px; }
+    .header-meta { text-align: left; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="header-inner">
+      <div>
+        <p class="header-mark">Analisi patrimoniale · Banca Generali Private</p>
+        <h1>Portafoglio <em>Dan Haim</em> S.R.L.</h1>
+      </div>
+      <div class="header-meta">
+        <div>Contratto · 00000095000274687</div>
+        <div>Intestatario · DAN HAIM S.R.L.</div>
+        <div>Stima totale · €500.000</div>
+        <div>Data analisi · Aprile 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. OVERVIEW -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Panoramica del portafoglio</h2>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card accent">
+        <div class="metric-label">Valore stimato</div>
+        <div class="metric-value gold">€500k</div>
+        <div class="metric-sub">ipotesi di lavoro</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Azionario (60%)</div>
+        <div class="metric-value">€300k</div>
+        <div class="metric-sub">3 fondi LUX IM + GS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Difensivo (40%)</div>
+        <div class="metric-value">€200k</div>
+        <div class="metric-sub">BTP + Certificates + Bond</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">TER medio ponderato</div>
+        <div class="metric-value red">~1.6%</div>
+        <div class="metric-sub">≈ €5.700/anno sui fondi</div>
+      </div>
+    </div>
+
+    <div class="chart-layout">
+      <div>
+        <div class="chart-wrap" style="height:270px;position:relative;">
+          <canvas id="donutChart" role="img" aria-label="Allocazione portafoglio per strumento"></canvas>
+          <div class="chart-center-label">
+            <span class="big">60/40</span>
+            <span class="small">allocazione</span>
+          </div>
+        </div>
+        <div id="donutLegend" style="margin-top:14px;"></div>
+      </div>
+
+      <div>
+        <div class="section-group-label" style="margin-bottom:10px;">Azionario — 60% · €300.000</div>
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th colspan="2">Strumento</th>
+              <th>Tipo</th>
+              <th>Stima</th>
+              <th>TER</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="dot" style="background:#378ADD;"></span></td>
+              <td class="name-cell">Lux Im Global Equity Upside DI EUR Acc</td>
+              <td><span class="badge badge-amber">Fondo attivo</span></td>
+              <td class="mono">€120.000</td>
+              <td><span class="badge badge-red">1.90%</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#185FA5;"></span></td>
+              <td class="name-cell">Lux Im Space And Defense DI EUR Acc</td>
+              <td><span class="badge badge-amber">Fondo attivo</span></td>
+              <td class="mono">€100.000</td>
+              <td><span class="badge badge-red">2.10%</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#85B7EB;"></span></td>
+              <td class="name-cell">GS Emerging Markets Core Equity Baseclose</td>
+              <td><span class="badge badge-amber">Fondo attivo</span></td>
+              <td class="mono">€80.000</td>
+              <td><span class="badge badge-amber">1.10%</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-group-label" style="margin-top:16px;margin-bottom:10px;">Obbligazionario — 14% · €70.000</div>
+        <table class="inv-table">
+          <tbody>
+            <tr>
+              <td><span class="dot" style="background:#1D9E75;"></span></td>
+              <td class="name-cell">BTP 2% 01/02/2028 · IT0005323032</td>
+              <td><span class="badge badge-green">BTP diretto</span></td>
+              <td class="mono">€30.000</td>
+              <td><span class="badge badge-green">0%</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#0F6E56;"></span></td>
+              <td class="name-cell">BTP Valore 14/05/2030 Step Up · IT0005594483</td>
+              <td><span class="badge badge-green">BTP diretto</span></td>
+              <td class="mono">€20.000</td>
+              <td><span class="badge badge-green">0%</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#085041;"></span></td>
+              <td class="name-cell">BTP 3.15% 15/11/2031 · IT0005619546</td>
+              <td><span class="badge badge-green">BTP diretto</span></td>
+              <td class="mono">€20.000</td>
+              <td><span class="badge badge-green">0%</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#9FE1CB;"></span></td>
+              <td class="name-cell">Lux Im Amundi Global Income Bond DI X EUR Acc</td>
+              <td><span class="badge badge-amber">Fondo attivo</span></td>
+              <td class="mono">€25.000</td>
+              <td><span class="badge badge-red">1.70%</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-group-label" style="margin-top:16px;margin-bottom:10px;">Certificates — 26% · €130.000</div>
+        <table class="inv-table">
+          <tbody>
+            <tr>
+              <td><span class="dot" style="background:#7F77DD;"></span></td>
+              <td class="name-cell">BNP Prot Cap Stoxx Glb Sel Div100 Mag29 · XS2759189207</td>
+              <td><span class="badge badge-neutral">Certificato</span></td>
+              <td class="mono">€50.000</td>
+              <td><span class="badge badge-neutral">implicito</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#534AB7;"></span></td>
+              <td class="name-cell">BNP Premium Protection 100% WO Mag29 · XS2759189546</td>
+              <td><span class="badge badge-neutral">Certificato</span></td>
+              <td class="mono">€50.000</td>
+              <td><span class="badge badge-neutral">implicito</span></td>
+            </tr>
+            <tr>
+              <td><span class="dot" style="background:#AFA9EC;"></span></td>
+              <td class="name-cell">Equity Protection 100% Gold (GOLDLNPM) · XS3255757190</td>
+              <td><span class="badge badge-gold">Certificato oro</span></td>
+              <td class="mono">€5.000</td>
+              <td><span class="badge badge-neutral">implicito</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ANALISI COSTI -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Analisi costi — il problema del TER elevato</h2>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="position:relative;width:100%;height:240px;">
+        <canvas id="costBar" role="img" aria-label="Costo annuo per fondo attuale vs ETF equivalente"></canvas>
+      </div>
+    </div>
+
+    <div class="cost-grid">
+      <div class="cost-block">
+        <div class="cost-block-title" style="color:var(--red);">● Portafoglio attuale — costi annui</div>
+        <div class="cost-row"><span class="cost-name">Global Equity Upside €120k × 1.90%</span><span class="cost-val" style="color:var(--red);">€2.280</span></div>
+        <div class="cost-row"><span class="cost-name">Space & Defense €100k × 2.10%</span><span class="cost-val" style="color:var(--red);">€2.100</span></div>
+        <div class="cost-row"><span class="cost-name">GS Emerging Markets €80k × 1.10%</span><span class="cost-val" style="color:var(--red);">€880</span></div>
+        <div class="cost-row"><span class="cost-name">Global Income Bond €25k × 1.70%</span><span class="cost-val" style="color:var(--red);">€425</span></div>
+        <div class="cost-total">
+          <span class="cost-total-label">Totale annuo</span>
+          <span class="cost-total-val" style="color:var(--red);">€5.685</span>
+        </div>
+      </div>
+      <div class="cost-block etf-block">
+        <div class="cost-block-title" style="color:var(--green);">● Portafoglio ETF — costi annui</div>
+        <div class="cost-row"><span class="cost-name">MSCI World (LCUW) €120k × 0.12%</span><span class="cost-val" style="color:var(--green);">€144</span></div>
+        <div class="cost-row"><span class="cost-name">VanEck Defense (DFNS) €100k × 0.55%</span><span class="cost-val" style="color:var(--green);">€550</span></div>
+        <div class="cost-row"><span class="cost-name">FTSE EM (VFEM) €80k × 0.22%</span><span class="cost-val" style="color:var(--green);">€176</span></div>
+        <div class="cost-row"><span class="cost-name">Global Agg Bond (AGGH) €25k × 0.10%</span><span class="cost-val" style="color:var(--green);">€25</span></div>
+        <div class="cost-total">
+          <span class="cost-total-label">Totale annuo</span>
+          <span class="cost-total-val" style="color:var(--green);">€895</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="saving-banner" style="margin-top:14px;">
+      <span class="saving-banner-text">Risparmio annuo immediato sui costi di gestione</span>
+      <span class="saving-banner-val">€4.790 / anno</span>
+    </div>
+
+    <div class="advisory" style="margin-top:14px;">
+      I certificates (€105k nominali) presentano costi <strong>impliciti</strong> non visibili nel TER, tipicamente incorporati nello spread di emissione (stima: 1.5–2.5% una tantum all'acquisto). I BTP diretti sono il componente più efficiente del portafoglio: TER 0%, tassazione agevolata al 12.5%.
+    </div>
+  </div>
+
+  <!-- 3. PIANO ETF -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Piano di sostituzione — fondi attivi → ETF</h2>
+    </div>
+
+    <div class="etf-card">
+      <div>
+        <div class="etf-from-name">Lux Im Global Equity Upside DI EUR Acc</div>
+        <div class="etf-from-detail">TER 1.90% · Azionario globale con protezione parziale · gestione attiva BG Fund Management Luxembourg · €120.000 stimati</div>
+      </div>
+      <div class="etf-arrow">→</div>
+      <div>
+        <div class="etf-to-name">Amundi MSCI World UCITS ETF Acc (LCUW)</div>
+        <div class="etf-to-detail">ISIN LU1681043599 · TER 0.12% · 1.500+ titoli globali large/mid cap · replicazione fisica · quotato Borsa Italiana</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val">–1.78%</span>
+        <span class="saving-label">risparmio annuo</span>
+      </div>
+    </div>
+
+    <div class="etf-card">
+      <div>
+        <div class="etf-from-name">Lux Im Space And Defense DI EUR Acc</div>
+        <div class="etf-from-detail">TER 2.10% · Azionario tematico difesa e spazio · gestione attiva · €100.000 stimati</div>
+      </div>
+      <div class="etf-arrow">→</div>
+      <div>
+        <div class="etf-to-name">VanEck Defense UCITS ETF (DFNS)</div>
+        <div class="etf-to-detail">ISIN IE0002PG6CA6 · TER 0.55% · 30 titoli difesa globale · stesso tema, costo 4× inferiore · quotato Xetra e Borsa Italiana</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val">–1.55%</span>
+        <span class="saving-label">risparmio annuo</span>
+      </div>
+    </div>
+
+    <div class="etf-card">
+      <div>
+        <div class="etf-from-name">GS Emerging Markets Core Equity Port Baseclose Acc (USD)</div>
+        <div class="etf-from-detail">TER ~1.10% · Azionario mercati emergenti · valuta USD non hedgiata · €80.000 stimati</div>
+      </div>
+      <div class="etf-arrow">→</div>
+      <div>
+        <div class="etf-to-name">Vanguard FTSE Emerging Markets UCITS ETF (VFEM)</div>
+        <div class="etf-to-detail">ISIN IE00B3VVMM84 · TER 0.22% · oltre 1.800 titoli EM · stessa esposizione valutaria USD · molto liquido</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val">–0.88%</span>
+        <span class="saving-label">risparmio annuo</span>
+      </div>
+    </div>
+
+    <div class="etf-card">
+      <div>
+        <div class="etf-from-name">Lux Im Amundi Global Income Bond DI X EUR Acc</div>
+        <div class="etf-from-detail">TER ~1.70% · Obbligazionario globale EUR hedged · gestione attiva Amundi · €25.000 stimati</div>
+      </div>
+      <div class="etf-arrow">→</div>
+      <div>
+        <div class="etf-to-name">iShares Global Aggregate Bond EUR Hedged ETF (AGGH)</div>
+        <div class="etf-to-detail">ISIN IE00BDBRDM35 · TER 0.10% · aggregato globale investment grade · hedgiato EUR · massima diversificazione bond</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val">–1.60%</span>
+        <span class="saving-label">risparmio annuo</span>
+      </div>
+    </div>
+
+    <div class="etf-card keep">
+      <div>
+        <div class="etf-from-name">Certificates BNP (€100k) + EP Gold (€5k)</div>
+        <div class="etf-from-detail">Costo implicito 1.5–2.5% in emissione · capitale vincolato a maggio 2029 · rischio credito emittente BNP Paribas</div>
+      </div>
+      <div class="etf-arrow" style="color:var(--green);">⏸</div>
+      <div>
+        <div class="etf-to-name">Tenere fino a scadenza naturale (maggio 2029)</div>
+        <div class="etf-to-detail">Non conviene vendere sul mercato secondario: lo spread bid-ask penalizza di 1–2%. A scadenza riallocare in BTP o ETF bond short-duration</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val" style="color:var(--amber);">⏳ 2029</span>
+        <span class="saving-label">tenere</span>
+      </div>
+    </div>
+
+    <div class="etf-card keep">
+      <div>
+        <div class="etf-from-name">BTP diretti — IT0005323032 · IT0005594483 · IT0005619546</div>
+        <div class="etf-from-detail">TER 0% · tassazione agevolata 12.5% · cedole certe · €70.000 nominali complessivi</div>
+      </div>
+      <div class="etf-arrow" style="color:var(--green);">✓</div>
+      <div>
+        <div class="etf-to-name">Nessuna modifica — già ottimali</div>
+        <div class="etf-to-detail">Strumento più efficiente del portafoglio. Alle prossime emissioni considerare nuovi BTP Valore o BTP Italia per cedole crescenti indicizzate all'inflazione</div>
+      </div>
+      <div class="etf-saving">
+        <span class="saving-val" style="color:var(--green);">✓</span>
+        <span class="saving-label">ottimali</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. SIMULATORE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Simulazione crescita — piano a 10 anni</h2>
+    </div>
+
+    <div class="sim-controls">
+      <h3 style="margin-bottom:20px;">Parametri di simulazione — trascina gli slider</h3>
+      <div class="slider-group">
+        <div class="slider-item">
+          <label>Rendimento lordo azionario</label>
+          <span class="slider-val" id="retEqV">7.0%</span>
+          <input type="range" min="2" max="12" step="0.5" value="7" id="retEq" oninput="updateSim()">
+          <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">Mercato neutro: ~7% · storico S&P 500: ~10%</div>
+        </div>
+        <div class="slider-item">
+          <label>Rendimento lordo bond/cert</label>
+          <span class="slider-val" id="retBondV">3.5%</span>
+          <input type="range" min="0.5" max="7" step="0.5" value="3.5" id="retBond" oninput="updateSim()">
+          <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">BTP 3.15% · Global Agg ~3.5%</div>
+        </div>
+        <div class="slider-item">
+          <label>Versamento annuo aggiuntivo</label>
+          <span class="slider-val" id="extraV">€0</span>
+          <input type="range" min="0" max="50000" step="1000" value="0" id="extra" oninput="updateSim()">
+          <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">Risparmio periodico facoltativo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-metrics">
+      <div class="metric-card">
+        <div class="metric-label">Rend. netto attuale</div>
+        <div class="metric-value red" id="m1">-</div>
+        <div class="metric-sub">dopo TER 1.60%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Rend. netto ETF</div>
+        <div class="metric-value green" id="m2">-</div>
+        <div class="metric-sub">dopo TER 0.22%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Valore anno 10 attuale</div>
+        <div class="metric-value" id="m3">-</div>
+        <div class="metric-sub">portafoglio attivo</div>
+      </div>
+      <div class="metric-card accent">
+        <div class="metric-label">Valore anno 10 ETF</div>
+        <div class="metric-value gold" id="m4">-</div>
+        <div class="metric-sub">portafoglio ottimizzato</div>
+      </div>
+    </div>
+
+    <div class="chart-legend">
+      <div class="legend-item"><span class="legend-line" style="background:var(--green);"></span>Portafoglio ETF ottimizzato</div>
+      <div class="legend-item"><span class="legend-dashed" style="border-color:var(--red);"></span>Portafoglio attuale</div>
+    </div>
+
+    <div style="position:relative;width:100%;height:320px;">
+      <canvas id="growthChart" role="img" aria-label="Proiezione crescita portafoglio su 10 anni"></canvas>
+    </div>
+
+    <div class="diff-callout" id="diffCallout"></div>
+  </div>
+
+  <!-- 5. CONCLUSIONI -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>Sintesi e raccomandazioni</h2>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="cost-block" style="border-color:rgba(226,75,74,0.2);">
+        <div class="cost-block-title" style="color:var(--red);margin-bottom:12px;">🔴 Azioni prioritarie</div>
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.8;">
+          <div style="margin-bottom:8px;">→ <strong style="color:var(--text);">Global Income Bond</strong>: sostituzione urgente. TER 1.70% su un fondo obbligazionario che rende ~3.5% significa cedere quasi metà del rendimento alla gestione.</div>
+          <div style="margin-bottom:8px;">→ <strong style="color:var(--text);">Global Equity Upside</strong>: sostituire con MSCI World ETF. Risparmio €2.136/anno a parità di esposizione azionaria globale.</div>
+          <div>→ Verificare con Banca Generali eventuali <strong style="color:var(--text);">commissioni di riscatto</strong> o lock-up prima di procedere.</div>
+        </div>
+      </div>
+      <div class="cost-block" style="border-color:rgba(212,160,23,0.2);">
+        <div class="cost-block-title" style="color:var(--amber);margin-bottom:12px;">🟡 Valutazioni strategiche</div>
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.8;">
+          <div style="margin-bottom:8px;">→ <strong style="color:var(--text);">Space & Defense</strong>: il tema giustifica una posizione, ma il TER 2.1% non lo giustifica. VanEck Defense (0.55%) offre esposizione identica.</div>
+          <div style="margin-bottom:8px;">→ <strong style="color:var(--text);">GS Emerging Markets</strong> in USD: valutare il rischio cambio EUR/USD. Se si vuole mantenere l'esposizione EM, VFEM a 0.22% è più efficiente.</div>
+          <div>→ <strong style="color:var(--text);">Certificates BNP</strong>: non toccare fino a maggio 2029. Il secondario è penalizzante.</div>
+        </div>
+      </div>
+      <div class="cost-block" style="border-color:rgba(76,175,125,0.2);">
+        <div class="cost-block-title" style="color:var(--green);margin-bottom:12px;">🟢 Già ottimizzato</div>
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.8;">
+          <div style="margin-bottom:8px;">→ <strong style="color:var(--text);">BTP diretti</strong>: la componente più efficiente. TER 0%, tassazione 12.5%, cedole certe. Considerare reinvestimento delle cedole su nuovi BTP Valore.</div>
+          <div>→ <strong style="color:var(--text);">EP Gold</strong>: piccola posizione (€5k). Protegge al 100% e partecipa al rialzo dell'oro. Tenere.</div>
+        </div>
+      </div>
+      <div class="cost-block">
+        <div class="cost-block-title" style="margin-bottom:12px;">⚪ Impatto economico stimato</div>
+        <div style="font-size:13px;color:var(--text-sec);line-height:1.8;">
+          <div style="margin-bottom:8px;">Risparmio immediato sui costi: <strong style="color:var(--green);">€4.790/anno</strong></div>
+          <div style="margin-bottom:8px;">Extrarendimento netto stimato ETF vs attivo: <strong style="color:var(--green);">+1.38%/anno</strong></div>
+          <div style="margin-bottom:8px;">Differenza capitale a 10 anni (rendimento base 7%/3.5%): <strong style="color:var(--green);">+€100k circa</strong></div>
+          <div>Tutto questo <strong style="color:var(--text);">a parità di esposizione ai mercati</strong>. La differenza viene solo dall'eliminazione dei costi di gestione eccessivi.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="advisory" style="margin-top:20px;">
+      <strong>Avvertenza.</strong> Questo documento è un'analisi informativa basata su ipotesi di portafoglio (€500k totali, allocazione 60/40) e non costituisce consulenza finanziaria personalizzata. I rendimenti passati non garantiscono rendimenti futuri. Prima di qualsiasi decisione operativa è indispensabile verificare: (a) le condizioni contrattuali con Banca Generali, incluse eventuali commissioni di riscatto o periodi minimi di detenzione; (b) il proprio profilo di rischio aggiornato; (c) le implicazioni fiscali delle operazioni di vendita/acquisto. Si raccomanda il supporto di un consulente finanziario indipendente (fee-only) non legato a prodotti distribuiti.
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div>Analisi elaborata con Claude · Anthropic · Aprile 2026</div>
+      <div>DAN HAIM S.R.L. · Portafoglio privato · Documento riservato</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+const COLORS = ['#378ADD','#185FA5','#85B7EB','#1D9E75','#0F6E56','#085041','#9FE1CB','#7F77DD','#534AB7','#AFA9EC'];
+const LABELS = ['Global Equity Upside','Space & Defense','GS Emerging Mkts','BTP 2% 2028','BTP Valore 2030','BTP 3.15% 2031','Global Income Bond','BNP Stoxx Div100','BNP Premium Prot','EP Gold'];
+const DATA   = [120,100,80,30,20,20,25,50,50,5];
+
+// DONUT
+const donut = new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: LABELS,
+    datasets: [{
+      data: DATA,
+      backgroundColor: COLORS,
+      borderWidth: 3,
+      borderColor: '#0C0C0A',
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '64%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1A1A16',
+        borderColor: 'rgba(201,168,76,0.3)',
+        borderWidth: 1,
+        titleColor: '#F0EBE0',
+        bodyColor: '#8A8478',
+        callbacks: { label: ctx => ` €${ctx.parsed}k · ${Math.round(ctx.parsed/5)}%` }
+      }
+    }
+  }
+});
+
+// DONUT LEGEND
+const leg = document.getElementById('donutLegend');
+leg.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px 12px;';
+LABELS.forEach((l,i) => {
+  const s = document.createElement('span');
+  s.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#8A8478;';
+  s.innerHTML = `<span style="width:8px;height:8px;border-radius:2px;background:${COLORS[i]};display:inline-block;flex-shrink:0;"></span>${l}`;
+  leg.appendChild(s);
+});
+
+// COST BAR CHART
+new Chart(document.getElementById('costBar'), {
+  type: 'bar',
+  data: {
+    labels: ['Global Equity Upside\n€120k','Space & Defense\n€100k','GS Emerging Mkts\n€80k','Global Income Bond\n€25k'],
+    datasets: [
+      {
+        label: 'Costo attuale (€)',
+        data: [2280, 2100, 880, 425],
+        backgroundColor: 'rgba(226,75,74,0.7)',
+        borderRadius: 4,
+        borderSkipped: false
+      },
+      {
+        label: 'Costo ETF equivalente (€)',
+        data: [144, 550, 176, 25],
+        backgroundColor: 'rgba(76,175,125,0.7)',
+        borderRadius: 4,
+        borderSkipped: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1A1A16',
+        borderColor: 'rgba(201,168,76,0.3)',
+        borderWidth: 1,
+        titleColor: '#F0EBE0',
+        bodyColor: '#8A8478',
+        callbacks: { label: ctx => ` ${ctx.dataset.label}: €${ctx.parsed.y.toLocaleString('it-IT')}` }
+      }
+    },
+    scales: {
+      y: {
+        ticks: { callback: v => '€' + v.toLocaleString('it-IT'), color: '#8A8478', font: { size: 11 } },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        border: { color: 'rgba(255,255,255,0.05)' }
+      },
+      x: {
+        ticks: { color: '#8A8478', font: { size: 11 }, maxRotation: 0 },
+        grid: { display: false },
+        border: { color: 'rgba(255,255,255,0.05)' }
+      }
+    }
+  }
+});
+
+// GROWTH SIMULATOR
+let growthInst = null;
+const START = 500000;
+const TER_ATT = 0.016;
+const TER_ETF = 0.0022;
+
+function calcNet(retEq, retBond, ter) {
+  return (0.6 * retEq + 0.4 * retBond) - ter;
+}
+
+function buildSeries(netRate, extra) {
+  const arr = [START];
+  for (let y = 1; y <= 10; y++) arr.push(Math.round(arr[y-1] * (1 + netRate) + extra));
+  return arr;
+}
+
+function fmt(v) { return '€' + Math.round(v).toLocaleString('it-IT'); }
+function fmtPct(v) { return (v*100).toFixed(2) + '%'; }
+
+function updateSim() {
+  const retEq   = parseFloat(document.getElementById('retEq').value) / 100;
+  const retBond  = parseFloat(document.getElementById('retBond').value) / 100;
+  const extra    = parseFloat(document.getElementById('extra').value);
+
+  document.getElementById('retEqV').textContent  = (retEq*100).toFixed(1) + '%';
+  document.getElementById('retBondV').textContent = (retBond*100).toFixed(1) + '%';
+  document.getElementById('extraV').textContent   = '€' + extra.toLocaleString('it-IT');
+
+  const netAtt = calcNet(retEq, retBond, TER_ATT);
+  const netEtf = calcNet(retEq, retBond, TER_ETF);
+
+  document.getElementById('m1').textContent = fmtPct(netAtt);
+  document.getElementById('m2').textContent = fmtPct(netEtf);
+
+  const sA = buildSeries(netAtt, extra);
+  const sE = buildSeries(netEtf, extra);
+
+  document.getElementById('m3').textContent = fmt(sA[10]);
+  document.getElementById('m4').textContent = fmt(sE[10]);
+
+  const diff = sE[10] - sA[10];
+  const extraTotal = extra * 10;
+  document.getElementById('diffCallout').innerHTML =
+    `Con il portafoglio ETF il valore finale è <strong>${fmt(diff)} in più</strong> rispetto all'attuale dopo 10 anni, a parità assoluta di mercati` +
+    (extra > 0 ? ` (inclusi versamenti aggiuntivi di ${fmt(extraTotal)})` : '') +
+    `. Questo extra-rendimento di <strong>${fmtPct(netEtf - netAtt)}/anno</strong> non viene dai mercati — deriva esclusivamente dall'eliminazione dei costi di gestione eccessivi.`;
+
+  const labs = ['Oggi','Anno 1','Anno 2','Anno 3','Anno 4','Anno 5','Anno 6','Anno 7','Anno 8','Anno 9','Anno 10'];
+  if (growthInst) growthInst.destroy();
+  growthInst = new Chart(document.getElementById('growthChart'), {
+    type: 'line',
+    data: {
+      labels: labs,
+      datasets: [
+        {
+          label: 'ETF ottimizzato',
+          data: sE,
+          borderColor: '#4CAF7D',
+          backgroundColor: 'rgba(76,175,125,0.08)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#4CAF7D',
+          fill: true,
+          tension: 0.35
+        },
+        {
+          label: 'Portafoglio attuale',
+          data: sA,
+          borderColor: '#E24B4A',
+          backgroundColor: 'rgba(226,75,74,0.04)',
+          borderWidth: 2,
+          borderDash: [6,4],
+          pointRadius: 3,
+          pointBackgroundColor: '#E24B4A',
+          fill: true,
+          tension: 0.35
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1A1A16',
+          borderColor: 'rgba(201,168,76,0.3)',
+          borderWidth: 1,
+          titleColor: '#F0EBE0',
+          bodyColor: '#8A8478',
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` }
+        }
+      },
+      scales: {
+        y: {
+          ticks: { callback: v => '€' + (v/1000).toFixed(0) + 'k', color: '#8A8478', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          border: { color: 'rgba(255,255,255,0.05)' }
+        },
+        x: {
+          ticks: { color: '#8A8478', font: { size: 11 } },
+          grid: { display: false },
+          border: { color: 'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+updateSim();
+</script>
+</body>
+</html>
